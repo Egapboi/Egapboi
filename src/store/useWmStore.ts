@@ -11,6 +11,12 @@ export interface WindowState {
   minimized: boolean;
   focused: boolean;
   component: string;
+  // Floating state properties
+  isFloating: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 interface WmState {
@@ -25,6 +31,8 @@ interface WmState {
   nextZIndex: number;
   /** Split ratio (0-1) for the divider between tiled windows. 0.5 = equal split. */
   splitRatio: number;
+  /** Layout direction for tiled windows */
+  layoutDirection: "horizontal" | "vertical";
 
   // Window actions
   openWindow: (id: string) => void;
@@ -40,6 +48,14 @@ interface WmState {
   swapWindows: (id1: string, id2: string) => void;
   /** Set the split ratio for the divider */
   setSplitRatio: (ratio: number) => void;
+  
+  // Floating window actions
+  toggleFloating: (id: string) => void;
+  moveWindow: (id: string, x: number, y: number) => void;
+  resizeWindow: (id: string, width: number, height: number) => void;
+
+  // Layout actions
+  toggleLayoutDirection: () => void;
 
   // Workspace actions
   setWorkspace: (n: number) => void;
@@ -63,6 +79,11 @@ const DEFAULT_WINDOWS: WindowState[] = [
     minimized: false,
     focused: true,
     component: "about",
+    isFloating: false,
+    x: 100,
+    y: 100,
+    width: 600,
+    height: 400,
   },
   {
     id: "contact",
@@ -73,6 +94,11 @@ const DEFAULT_WINDOWS: WindowState[] = [
     minimized: false,
     focused: false,
     component: "contact",
+    isFloating: false,
+    x: 150,
+    y: 150,
+    width: 420,
+    height: 340,
   },
   {
     id: "projects",
@@ -83,6 +109,11 @@ const DEFAULT_WINDOWS: WindowState[] = [
     minimized: false,
     focused: false,
     component: "projects",
+    isFloating: false,
+    x: 100,
+    y: 100,
+    width: 900,
+    height: 520,
   },
 ];
 
@@ -97,6 +128,7 @@ export const useWmStore = create<WmState>((set) => ({
   calendarOpen: false,
   nextZIndex: 3,
   splitRatio: 0.5,
+  layoutDirection: "horizontal",
 
   openWindow: (id: string) => {
     set((state) => {
@@ -196,21 +228,21 @@ export const useWmStore = create<WmState>((set) => ({
   swapFocusedDirection: (direction: number) => {
     set((state) => {
       if (!state.focusedWindowId) return state;
-      const visibleWindows = state.windows.filter(
-        (w) => w.workspace === state.activeWorkspace && !w.minimized
+      // Only swap tiled windows
+      const visibleTiledWindows = state.windows.filter(
+        (w) => w.workspace === state.activeWorkspace && !w.minimized && !w.isFloating
       );
-      const currentIndex = visibleWindows.findIndex(
+      const currentIndex = visibleTiledWindows.findIndex(
         (w) => w.id === state.focusedWindowId
       );
       if (currentIndex === -1) return state;
 
       const targetIndex = currentIndex + direction;
-      if (targetIndex < 0 || targetIndex >= visibleWindows.length) return state;
+      if (targetIndex < 0 || targetIndex >= visibleTiledWindows.length) return state;
 
-      const currentId = visibleWindows[currentIndex].id;
-      const targetId = visibleWindows[targetIndex].id;
+      const currentId = visibleTiledWindows[currentIndex].id;
+      const targetId = visibleTiledWindows[targetIndex].id;
 
-      // Swap positions in the main windows array
       const currentMainIndex = state.windows.findIndex((w) => w.id === currentId);
       const targetMainIndex = state.windows.findIndex((w) => w.id === targetId);
 
@@ -239,7 +271,51 @@ export const useWmStore = create<WmState>((set) => ({
   },
 
   setSplitRatio: (ratio: number) => {
-    set({ splitRatio: Math.max(0.2, Math.min(0.8, ratio)) });
+    set({ splitRatio: Math.max(0.1, Math.min(0.9, ratio)) });
+  },
+
+  toggleFloating: (id: string) => {
+    set((state) => {
+      return {
+        windows: state.windows.map((w) => {
+          if (w.id === id) {
+            const isFloating = !w.isFloating;
+            return {
+              ...w,
+              isFloating,
+              // If becoming floating, ensure it's on top
+              zIndex: isFloating ? state.nextZIndex : w.zIndex,
+            };
+          }
+          return w;
+        }),
+        nextZIndex: state.windows.find(w => w.id === id && !w.isFloating) ? state.nextZIndex + 1 : state.nextZIndex,
+      };
+    });
+  },
+
+  moveWindow: (id: string, x: number, y: number) => {
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.id === id ? { ...w, x, y } : w
+      ),
+    }));
+  },
+
+  resizeWindow: (id: string, width: number, height: number) => {
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.id === id
+          ? { ...w, width: Math.max(200, width), height: Math.max(150, height) }
+          : w
+      ),
+    }));
+  },
+
+  toggleLayoutDirection: () => {
+    set((state) => ({
+      layoutDirection: state.layoutDirection === "horizontal" ? "vertical" : "horizontal",
+    }));
   },
 
   setWorkspace: (n: number) => {

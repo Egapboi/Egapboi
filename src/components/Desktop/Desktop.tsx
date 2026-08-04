@@ -23,12 +23,13 @@ export interface TileRect {
 
 const TILE_GAP = 4;
 
-/** Compute tiling rectangles based on split ratio */
+/** Compute tiling rectangles based on split ratio and direction */
 function computeTiles(
   count: number,
   viewW: number,
   viewH: number,
-  splitRatio: number
+  splitRatio: number,
+  direction: "horizontal" | "vertical"
 ): TileRect[] {
   const g = TILE_GAP;
   if (count === 0) return [];
@@ -36,30 +37,59 @@ function computeTiles(
     return [{ x: g, y: g, width: viewW - g * 2, height: viewH - g * 2 }];
   }
   if (count === 2) {
-    const leftW = (viewW - g * 3) * splitRatio;
-    const rightW = viewW - g * 3 - leftW;
-    return [
-      { x: g, y: g, width: leftW, height: viewH - g * 2 },
-      { x: g * 2 + leftW, y: g, width: rightW, height: viewH - g * 2 },
+    if (direction === "horizontal") {
+      const leftW = (viewW - g * 3) * splitRatio;
+      const rightW = viewW - g * 3 - leftW;
+      return [
+        { x: g, y: g, width: leftW, height: viewH - g * 2 },
+        { x: g * 2 + leftW, y: g, width: rightW, height: viewH - g * 2 },
+      ];
+    } else {
+      const topH = (viewH - g * 3) * splitRatio;
+      const bottomH = viewH - g * 3 - topH;
+      return [
+        { x: g, y: g, width: viewW - g * 2, height: topH },
+        { x: g, y: g * 2 + topH, width: viewW - g * 2, height: bottomH },
+      ];
+    }
+  }
+
+  // 3+: master (splitRatio), stack on remaining space
+  if (direction === "horizontal") {
+    const masterW = (viewW - g * 3) * splitRatio;
+    const stackW = viewW - g * 3 - masterW;
+    const stackCount = count - 1;
+    const stackH = (viewH - g * (stackCount + 1)) / stackCount;
+    const tiles: TileRect[] = [
+      { x: g, y: g, width: masterW, height: viewH - g * 2 },
     ];
+    for (let i = 0; i < stackCount; i++) {
+      tiles.push({
+        x: g * 2 + masterW,
+        y: g + i * (stackH + g),
+        width: stackW,
+        height: stackH,
+      });
+    }
+    return tiles;
+  } else {
+    const masterH = (viewH - g * 3) * splitRatio;
+    const stackH = viewH - g * 3 - masterH;
+    const stackCount = count - 1;
+    const stackW = (viewW - g * (stackCount + 1)) / stackCount;
+    const tiles: TileRect[] = [
+      { x: g, y: g, width: viewW - g * 2, height: masterH },
+    ];
+    for (let i = 0; i < stackCount; i++) {
+      tiles.push({
+        x: g + i * (stackW + g),
+        y: g * 2 + masterH,
+        width: stackW,
+        height: stackH,
+      });
+    }
+    return tiles;
   }
-  // 3+: master (left, splitRatio width), stack on right
-  const masterW = (viewW - g * 3) * splitRatio;
-  const stackW = viewW - g * 3 - masterW;
-  const stackCount = count - 1;
-  const stackH = (viewH - g * (stackCount + 1)) / stackCount;
-  const tiles: TileRect[] = [
-    { x: g, y: g, width: masterW, height: viewH - g * 2 },
-  ];
-  for (let i = 0; i < stackCount; i++) {
-    tiles.push({
-      x: g * 2 + masterW,
-      y: g + i * (stackH + g),
-      width: stackW,
-      height: stackH,
-    });
-  }
-  return tiles;
 }
 
 export function Desktop() {
@@ -70,6 +100,7 @@ export function Desktop() {
   const setSplitRatio = useWmStore((s) => s.setSplitRatio);
   const swapWindows = useWmStore((s) => s.swapWindows);
   const focusWindow = useWmStore((s) => s.focusWindow);
+  const layoutDirection = useWmStore((s) => s.layoutDirection);
 
   const [viewport, setViewport] = useState({ w: 1200, h: 700 });
   useEffect(() => {
@@ -84,21 +115,25 @@ export function Desktop() {
     (w) => w.workspace === activeWorkspace && !w.minimized
   );
 
+  const tiledWindows = visibleWindows.filter((w) => !w.isFloating);
+  const floatingWindows = visibleWindows.filter((w) => w.isFloating);
+
   const tiles = computeTiles(
-    visibleWindows.length,
+    tiledWindows.length,
     viewport.w,
     viewport.h,
-    splitRatio
+    splitRatio,
+    layoutDirection
   );
 
   // ─── Divider drag state ───
   const [isDividerDragging, setIsDividerDragging] = useState(false);
-  const dividerRef = useRef<{ startX: number; startRatio: number } | null>(null);
+  const dividerRef = useRef<{ startX: number; startY: number; startRatio: number } | null>(null);
 
   const onDividerPointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      dividerRef.current = { startX: e.clientX, startRatio: splitRatio };
+      dividerRef.current = { startX: e.clientX, startY: e.clientY, startRatio: splitRatio };
       setIsDividerDragging(true);
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
@@ -108,11 +143,17 @@ export function Desktop() {
   const onDividerPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!dividerRef.current) return;
-      const dx = e.clientX - dividerRef.current.startX;
-      const dRatio = dx / (viewport.w - TILE_GAP * 3);
-      setSplitRatio(dividerRef.current.startRatio + dRatio);
+      if (layoutDirection === "horizontal") {
+        const dx = e.clientX - dividerRef.current.startX;
+        const dRatio = dx / (viewport.w - TILE_GAP * 3);
+        setSplitRatio(dividerRef.current.startRatio + dRatio);
+      } else {
+        const dy = e.clientY - dividerRef.current.startY;
+        const dRatio = dy / (viewport.h - TILE_GAP * 3);
+        setSplitRatio(dividerRef.current.startRatio + dRatio);
+      }
     },
-    [viewport.w, setSplitRatio]
+    [viewport.w, viewport.h, layoutDirection, setSplitRatio]
   );
 
   const onDividerPointerUp = useCallback(() => {
@@ -120,7 +161,7 @@ export function Desktop() {
     setIsDividerDragging(false);
   }, []);
 
-  // ─── Window drag-to-swap ───
+  // ─── Window drag-to-swap (Tiled only) ───
   const [dragState, setDragState] = useState<{
     id: string;
     offsetX: number;
@@ -129,11 +170,11 @@ export function Desktop() {
     currentY: number;
   } | null>(null);
 
-  const onWindowDragStart = useCallback(
+  const onTiledWindowDragStart = useCallback(
     (id: string, e: React.PointerEvent) => {
-      if (visibleWindows.length < 2) return; // No swap if only 1 window
+      if (tiledWindows.length < 2) return;
       focusWindow(id);
-      const winIndex = visibleWindows.findIndex((w) => w.id === id);
+      const winIndex = tiledWindows.findIndex((w) => w.id === id);
       const tile = tiles[winIndex];
       if (!tile) return;
 
@@ -146,10 +187,10 @@ export function Desktop() {
       });
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [visibleWindows, tiles, focusWindow]
+    [tiledWindows, tiles, focusWindow]
   );
 
-  const onWindowDragMove = useCallback(
+  const onTiledWindowDragMove = useCallback(
     (e: React.PointerEvent) => {
       if (!dragState) return;
       setDragState((prev) =>
@@ -159,12 +200,11 @@ export function Desktop() {
     [dragState]
   );
 
-  const onWindowDragEnd = useCallback(() => {
+  const onTiledWindowDragEnd = useCallback(() => {
     if (!dragState) return;
 
-    // Find which tile the cursor is over
     const { currentX, currentY, id } = dragState;
-    const adjustedY = currentY - 36; // account for status bar offset
+    const adjustedY = currentY - 36;
     for (let i = 0; i < tiles.length; i++) {
       const t = tiles[i];
       if (
@@ -173,7 +213,7 @@ export function Desktop() {
         adjustedY >= t.y &&
         adjustedY <= t.y + t.height
       ) {
-        const targetWin = visibleWindows[i];
+        const targetWin = tiledWindows[i];
         if (targetWin && targetWin.id !== id) {
           swapWindows(id, targetWin.id);
         }
@@ -182,7 +222,7 @@ export function Desktop() {
     }
 
     setDragState(null);
-  }, [dragState, tiles, visibleWindows, swapWindows]);
+  }, [dragState, tiles, tiledWindows, swapWindows]);
 
   const handleDesktopClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -190,10 +230,12 @@ export function Desktop() {
     }
   };
 
-  // Compute divider position for visual display
-  const showDivider = visibleWindows.length >= 2;
-  const dividerX = showDivider
+  const showDivider = tiledWindows.length >= 2;
+  const dividerX = showDivider && layoutDirection === "horizontal"
     ? TILE_GAP + (viewport.w - TILE_GAP * 3) * splitRatio + TILE_GAP * 0.5
+    : 0;
+  const dividerY = showDivider && layoutDirection === "vertical"
+    ? TILE_GAP + (viewport.h - TILE_GAP * 3) * splitRatio + TILE_GAP * 0.5
     : 0;
 
   return (
@@ -201,10 +243,9 @@ export function Desktop() {
       id="desktop-canvas"
       className="fixed inset-0 top-9 overflow-hidden bg-[var(--desktop-bg)]"
       onClick={handleDesktopClick}
-      onPointerMove={onWindowDragMove}
-      onPointerUp={onWindowDragEnd}
+      onPointerMove={onTiledWindowDragMove}
+      onPointerUp={onTiledWindowDragEnd}
     >
-      {/* Desktop wallpaper pattern */}
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -214,7 +255,8 @@ export function Desktop() {
       />
 
       <AnimatePresence>
-        {visibleWindows.map((win, index) => {
+        {/* Render Tiled Windows */}
+        {tiledWindows.map((win, index) => {
           const Content = componentMap[win.component];
           if (!Content) return null;
           const tile = tiles[index];
@@ -226,8 +268,20 @@ export function Desktop() {
               windowState={win}
               tile={tile}
               isDragActive={isDragging}
-              onTitleDragStart={(e) => onWindowDragStart(win.id, e)}
+              dragState={isDragging ? dragState : undefined}
+              onTitleDragStart={(e) => onTiledWindowDragStart(win.id, e)}
             >
+              <Content />
+            </WindowShell>
+          );
+        })}
+
+        {/* Render Floating Windows */}
+        {floatingWindows.map((win) => {
+          const Content = componentMap[win.component];
+          if (!Content) return null;
+          return (
+            <WindowShell key={win.id} windowState={win}>
               <Content />
             </WindowShell>
           );
@@ -237,35 +291,24 @@ export function Desktop() {
       {/* Draggable divider between tiles */}
       {showDivider && (
         <div
-          className={`absolute top-0 bottom-0 z-[100] cursor-col-resize flex items-center justify-center
-            ${isDividerDragging ? "bg-[var(--accent)]/20" : "hover:bg-[var(--accent)]/10"}
-            transition-colors`}
-          style={{
-            left: dividerX - 4,
-            width: 8,
-          }}
+          className={`absolute z-[100] flex items-center justify-center transition-colors
+            ${layoutDirection === "horizontal" ? "cursor-col-resize top-0 bottom-0" : "cursor-row-resize left-0 right-0"}
+            ${isDividerDragging ? "bg-[var(--accent)]/20" : "hover:bg-[var(--accent)]/10"}`}
+          style={
+            layoutDirection === "horizontal"
+              ? { left: dividerX - 4, width: 8 }
+              : { top: dividerY - 4, height: 8 }
+          }
           onPointerDown={onDividerPointerDown}
           onPointerMove={onDividerPointerMove}
           onPointerUp={onDividerPointerUp}
         >
           <div
-            className={`w-0.5 h-12 rounded-full transition-colors
+            className={`rounded-full transition-colors
+              ${layoutDirection === "horizontal" ? "w-0.5 h-12" : "h-0.5 w-12"}
               ${isDividerDragging ? "bg-[var(--accent)]" : "bg-[var(--border)] hover:bg-[var(--accent)]/60"}`}
           />
         </div>
-      )}
-
-      {/* Drag ghost indicator */}
-      {dragState && (
-        <div
-          className="fixed pointer-events-none z-[9998] rounded-lg border-2 border-dashed border-[var(--accent)]/60 bg-[var(--accent)]/5"
-          style={{
-            left: dragState.currentX - dragState.offsetX,
-            top: dragState.currentY - dragState.offsetY - 36,
-            width: 200,
-            height: 100,
-          }}
-        />
       )}
     </div>
   );

@@ -54,7 +54,6 @@ export const workspaces = [
 
 export const keybinds = [
   { key: "q", description: "Close focused window" },
-  { key: "f", description: "Toggle maximize" },
   { key: "m", description: "Minimize window" },
   { key: "Tab", description: "Cycle focus" },
   { key: "1 / 2 / 3", description: "Switch workspace" },
@@ -62,7 +61,8 @@ export const keybinds = [
   { key: "/", description: "Open command palette" },
   { key: "Esc", description: "Close overlay / unfocus" },
   { key: "Alt+Shift+Q", description: "Close window (modifier)" },
-  { key: "Alt+Shift+F", description: "Maximize (modifier)" },
   { key: "Alt+Shift+K", description: "Command palette (modifier)" },
   { key: "Alt+Shift+←/→ (or H/L)", description: "Swap window positions" },
+  { key: "Alt+Shift+F", description: "Toggle window floating state" },
+  { key: "Alt+Shift+V", description: "Toggle layout split direction" },
 ];

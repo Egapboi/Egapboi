@@ -17,6 +17,8 @@ export function useKeybinds() {
     closeAllOverlays,
     unfocusAll,
     swapFocusedDirection,
+    toggleFloating,
+    toggleLayoutDirection,
   } = useWmStore();
 
   useEffect(() => {
@@ -47,6 +49,14 @@ export function useKeybinds() {
           case "l":
             e.preventDefault();
             swapFocusedDirection(1);
+            return;
+          case "f":
+            e.preventDefault();
+            if (focusedWindowId) toggleFloating(focusedWindowId);
+            return;
+          case "v":
+            e.preventDefault();
+            toggleLayoutDirection();
             return;
         }
       }
@@ -119,5 +129,7 @@ export function useKeybinds() {
     closeAllOverlays,
     unfocusAll,
     swapFocusedDirection,
+    toggleFloating,
+    toggleLayoutDirection,
   ]);
 }
