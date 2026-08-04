@@ -161,8 +161,12 @@ export function Desktop() {
 
   const [viewport, setViewport] = useState({ w: 1200, h: 700 });
   useEffect(() => {
-    const update = () =>
+    const update = () => {
       setViewport({ w: window.innerWidth, h: window.innerHeight - 36 });
+      if (window.innerWidth < 768) {
+        useWmStore.setState({ layoutDirection: "vertical" });
+      }
+    };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);

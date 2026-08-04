@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useWmStore, WindowState } from "@/store/useWmStore";
-import { Minus, X, Terminal, Link, FolderOpen } from "lucide-react";
+import { Minus, Terminal, Link, FolderOpen } from "lucide-react";
 import { TileRect } from "./Desktop";
 import { useRef, useState, useCallback } from "react";
 
@@ -34,7 +34,6 @@ export function WindowShell({
 }: WindowShellProps) {
   const { id, title, icon, zIndex, focused, isFloating, x, y, width, height } = windowState;
   const focusWindow = useWmStore((s) => s.focusWindow);
-  const closeWindow = useWmStore((s) => s.closeWindow);
   const minimizeWindow = useWmStore((s) => s.minimizeWindow);
   const moveWindow = useWmStore((s) => s.moveWindow);
   const resizeWindow = useWmStore((s) => s.resizeWindow);
@@ -176,16 +175,6 @@ export function WindowShell({
             title="Minimize to tray"
           >
             <Minus size={12} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              closeWindow(id);
-            }}
-            className="p-1 rounded hover:bg-red-500/20 text-[var(--text-dim)] hover:text-red-400 transition-colors cursor-pointer"
-            title="Close"
-          >
-            <X size={12} />
           </button>
         </div>
       </div>

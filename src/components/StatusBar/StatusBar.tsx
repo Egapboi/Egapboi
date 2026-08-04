@@ -17,24 +17,24 @@ export function StatusBar() {
                  font-mono text-xs select-none"
     >
       {/* Left: Workspaces + Focused Window */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0 overflow-hidden">
         <WorkspaceSwitcher />
-        <div className="w-px h-4 bg-[var(--bar-divider)]" />
-        <FocusedWindowIndicator />
+        <div className="hidden sm:block w-px h-4 bg-[var(--bar-divider)]" />
+        <div className="hidden sm:flex"><FocusedWindowIndicator /></div>
         <WindowTray />
       </div>
 
       {/* Center: Clock */}
-      <div className="absolute left-1/2 -translate-x-1/2">
+      <div className="hidden md:block absolute left-1/2 -translate-x-1/2">
         <Clock />
       </div>
 
       {/* Right: System Meters + Toggles */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
         <MusicWidget />
-        <div className="w-px h-4 bg-[var(--bar-divider)]" />
-        <SystemMeters />
-        <div className="w-px h-4 bg-[var(--bar-divider)]" />
+        <div className="hidden lg:block w-px h-4 bg-[var(--bar-divider)]" />
+        <div className="hidden lg:flex"><SystemMeters /></div>
+        <div className="hidden sm:block w-px h-4 bg-[var(--bar-divider)]" />
         <QuickToggles />
       </div>
     </header>
