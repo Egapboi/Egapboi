@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Home, Code, Link, Terminal, FolderOpen, MessageCircle } from "lucide-react";
+import { Home, Code, Link, Terminal, FolderOpen, MessageCircle, Music } from "lucide-react";
 import { AboutWindow } from "../Windows/AboutWindow";
 import { ProjectsWindow } from "../Windows/ProjectsWindow";
 import { ContactWindow } from "../Windows/ContactWindow";
+import { MusicWindow } from "../Windows/MusicWindow";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tabs = [
   { id: "about", label: "About", icon: Terminal, component: AboutWindow },
   { id: "projects", label: "Projects", icon: FolderOpen, component: ProjectsWindow },
   { id: "contact", label: "Links", icon: MessageCircle, component: ContactWindow },
+  { id: "music", label: "Music", icon: Music, component: MusicWindow },
 ];
 
 export function MobileView() {

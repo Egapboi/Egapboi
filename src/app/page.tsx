@@ -8,6 +8,7 @@ import { Desktop } from "@/components/Desktop/Desktop";
 import { CommandPalette } from "@/components/Overlays/CommandPalette";
 import { KeybindSheet } from "@/components/Overlays/KeybindSheet";
 import { MobileView } from "@/components/Mobile/MobileView";
+import { HiddenYoutubePlayer } from "@/components/HiddenYoutubePlayer";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -29,20 +30,19 @@ export default function Home() {
   // Register global keybinds
   useKeybinds();
 
-  if (isMobile) {
-    return (
-      <div data-theme={theme}>
-        <MobileView />
-      </div>
-    );
-  }
-
   return (
     <div data-theme={theme} className="h-screen w-screen overflow-hidden">
-      <StatusBar />
-      <Desktop />
-      <CommandPalette />
-      <KeybindSheet />
+      <HiddenYoutubePlayer />
+      {isMobile ? (
+        <MobileView />
+      ) : (
+        <>
+          <StatusBar />
+          <Desktop />
+          <CommandPalette />
+          <KeybindSheet />
+        </>
+      )}
     </div>
   );
 }
