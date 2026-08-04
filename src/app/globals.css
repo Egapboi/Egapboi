@@ -1,0 +1,117 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/* ── Dark Theme (default) ── */
+:root {
+  --background: #0a0a0f;
+  --desktop-bg: #0d0d14;
+  --bar-bg: rgba(12, 12, 20, 0.85);
+  --bar-border: rgba(255, 255, 255, 0.06);
+  --bar-divider: rgba(255, 255, 255, 0.08);
+  --bar-text: #c8c8d4;
+  --bar-text-dim: #6b6b80;
+  --surface: rgba(18, 18, 28, 0.95);
+  --window-bg: #0f0f18;
+  --titlebar-active: rgba(20, 20, 32, 0.98);
+  --titlebar-inactive: rgba(16, 16, 24, 0.9);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e0e0ec;
+  --text-dim: #6e6e84;
+  --accent: #7c6aef;
+  --accent-secondary: #ef6a9a;
+  --foreground: #e0e0ec;
+}
+
+/* ── High Contrast Theme ── */
+[data-theme="high-contrast"] {
+  --background: #000000;
+  --desktop-bg: #050508;
+  --bar-bg: rgba(0, 0, 0, 0.95);
+  --bar-border: rgba(255, 255, 255, 0.12);
+  --bar-divider: rgba(255, 255, 255, 0.15);
+  --bar-text: #ffffff;
+  --bar-text-dim: #8888aa;
+  --surface: rgba(10, 10, 16, 0.98);
+  --window-bg: #06060c;
+  --titlebar-active: rgba(12, 12, 20, 0.99);
+  --titlebar-inactive: rgba(8, 8, 14, 0.95);
+  --border: rgba(255, 255, 255, 0.15);
+  --text: #ffffff;
+  --text-dim: #8888aa;
+  --accent: #a78bfa;
+  --accent-secondary: #fb7185;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* ── Base ── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Inter", sans-serif;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Focus visible ── */
+*:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Selection ── */
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* ── Utilities ── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+/* ── Line clamp ── */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Tabular nums ── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
