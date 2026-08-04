@@ -44,6 +44,28 @@ export const windowsConfig: WindowConfig[] = [
     defaultHeight: 520,
     component: "projects",
   },
+  {
+    id: "music",
+    title: "ncmpcpp",
+    icon: "music",
+    workspace: 3,
+    defaultX: 100,
+    defaultY: 100,
+    defaultWidth: 800,
+    defaultHeight: 500,
+    component: "music",
+  },
+  {
+    id: "media",
+    title: "now_playing.jpg",
+    icon: "image",
+    workspace: 3,
+    defaultX: 100,
+    defaultY: 100,
+    defaultWidth: 600,
+    defaultHeight: 400,
+    component: "media",
+  },
 ];
 
 export const workspaces = [

@@ -5,13 +5,18 @@ import { WindowShell } from "./WindowShell";
 import { AboutWindow } from "../Windows/AboutWindow";
 import { ProjectsWindow } from "../Windows/ProjectsWindow";
 import { ContactWindow } from "../Windows/ContactWindow";
+import { MusicWindow } from "../Windows/MusicWindow";
+import { MediaWindow } from "../Windows/MediaWindow";
 import { AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
+import YouTube, { YouTubeEvent, YouTubePlayer } from "react-youtube";
 
 const componentMap: Record<string, React.ComponentType> = {
   about: AboutWindow,
   projects: ProjectsWindow,
   contact: ContactWindow,
+  music: MusicWindow,
+  media: MediaWindow,
 };
 
 export interface TileRect {
@@ -101,6 +106,47 @@ export function Desktop() {
   const swapWindows = useWmStore((s) => s.swapWindows);
   const focusWindow = useWmStore((s) => s.focusWindow);
   const layoutDirection = useWmStore((s) => s.layoutDirection);
+  
+  // Playback state for YouTube
+  const currentTrackId = useWmStore((s) => s.currentTrackId);
+  const isPlaying = useWmStore((s) => s.isPlaying);
+  const volume = useWmStore((s) => s.volume);
+  const setIsPlaying = useWmStore((s) => s.setIsPlaying);
+  const setPlaybackTime = useWmStore((s) => s.setPlaybackTime);
+  const setYoutubePlayer = useWmStore((s) => s.setYoutubePlayer);
+  const youtubePlayer = useWmStore((s) => s.youtubePlayer);
+  const playTrack = useWmStore((s) => s.playTrack);
+  const playerRef = useRef<YouTubePlayer | null>(null);
+
+  // Sync YouTube player with store
+  useEffect(() => {
+    if (playerRef.current) {
+      if (isPlaying) playerRef.current.playVideo();
+      else playerRef.current.pauseVideo();
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.setVolume(volume);
+    }
+  }, [volume]);
+
+  // Track time
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying && youtubePlayer) {
+      interval = setInterval(async () => {
+        try {
+          const time = await youtubePlayer.getCurrentTime();
+          if (time !== undefined) setPlaybackTime(time);
+        } catch(e) {
+          console.error("Seeker error", e);
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, youtubePlayer, setPlaybackTime]);
 
   const [viewport, setViewport] = useState({ w: 1200, h: 700 });
   useEffect(() => {
@@ -253,6 +299,33 @@ export function Desktop() {
           backgroundSize: "32px 32px",
         }}
       />
+
+      {/* Hidden YouTube Player */}
+      <div className="hidden">
+        {currentTrackId && (
+          <YouTube
+            videoId={currentTrackId}
+            opts={{
+              playerVars: {
+                autoplay: 1,
+                controls: 0,
+              },
+            }}
+            onReady={(e: YouTubeEvent) => {
+              playerRef.current = e.target;
+              setYoutubePlayer(e.target);
+              e.target.setVolume(volume);
+              if (isPlaying) e.target.playVideo();
+            }}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onEnd={() => {
+              // Automatically play next track? We'll leave it to the user or handle it by store.
+              setIsPlaying(false);
+            }}
+          />
+        )}
+      </div>
 
       <AnimatePresence>
         {/* Render Tiled Windows */}

@@ -5,6 +5,7 @@ import { FocusedWindowIndicator } from "./FocusedWindowIndicator";
 import { Clock } from "./Clock";
 import { SystemMeters } from "./SystemMeters";
 import { QuickToggles } from "./QuickToggles";
+import { MusicWidget } from "./MusicWidget";
 import { WindowTray } from "./WindowTray";
 
 export function StatusBar() {
@@ -30,6 +31,8 @@ export function StatusBar() {
 
       {/* Right: System Meters + Toggles */}
       <div className="flex items-center gap-3">
+        <MusicWidget />
+        <div className="w-px h-4 bg-[var(--bar-divider)]" />
         <SystemMeters />
         <div className="w-px h-4 bg-[var(--bar-divider)]" />
         <QuickToggles />

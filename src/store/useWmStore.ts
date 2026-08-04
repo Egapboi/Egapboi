@@ -34,6 +34,13 @@ interface WmState {
   /** Layout direction for tiled windows */
   layoutDirection: "horizontal" | "vertical";
 
+  // Playback state
+  isPlaying: boolean;
+  currentTrackId: string | null;
+  volume: number;
+  playbackTime: number;
+  youtubePlayer: any;
+
   // Window actions
   openWindow: (id: string) => void;
   closeWindow: (id: string) => void;
@@ -56,6 +63,14 @@ interface WmState {
 
   // Layout actions
   toggleLayoutDirection: () => void;
+
+  // Playback actions
+  playTrack: (videoId: string) => void;
+  togglePlayback: () => void;
+  setVolume: (v: number) => void;
+  setIsPlaying: (playing: boolean) => void;
+  setPlaybackTime: (t: number) => void;
+  setYoutubePlayer: (p: any) => void;
 
   // Workspace actions
   setWorkspace: (n: number) => void;
@@ -115,9 +130,39 @@ const DEFAULT_WINDOWS: WindowState[] = [
     width: 900,
     height: 520,
   },
+  {
+    id: "music",
+    title: "ncmpcpp",
+    icon: "music",
+    workspace: 3,
+    zIndex: 1,
+    minimized: false,
+    focused: false,
+    component: "music",
+    isFloating: false,
+    x: 100,
+    y: 100,
+    width: 800,
+    height: 500,
+  },
+  {
+    id: "media",
+    title: "now_playing.jpg",
+    icon: "image",
+    workspace: 3,
+    zIndex: 1,
+    minimized: true,
+    focused: false,
+    component: "media",
+    isFloating: false,
+    x: 100,
+    y: 100,
+    width: 600,
+    height: 400,
+  },
 ];
 
-export const useWmStore = create<WmState>((set) => ({
+export const useWmStore = create<WmState>((set, get) => ({
   windows: DEFAULT_WINDOWS,
   activeWorkspace: 1,
   focusedWindowId: "about",
@@ -129,6 +174,11 @@ export const useWmStore = create<WmState>((set) => ({
   nextZIndex: 3,
   splitRatio: 0.5,
   layoutDirection: "horizontal",
+  isPlaying: false,
+  currentTrackId: null,
+  volume: 50,
+  playbackTime: 0,
+  youtubePlayer: null,
 
   openWindow: (id: string) => {
     set((state) => {
@@ -316,6 +366,31 @@ export const useWmStore = create<WmState>((set) => ({
     set((state) => ({
       layoutDirection: state.layoutDirection === "horizontal" ? "vertical" : "horizontal",
     }));
+  },
+
+  playTrack: (videoId: string) => {
+    set({ currentTrackId: videoId, isPlaying: true });
+    get().openWindow("media");
+  },
+
+  togglePlayback: () => {
+    set((state) => ({ isPlaying: !state.isPlaying }));
+  },
+
+  setVolume: (v: number) => {
+    set({ volume: Math.max(0, Math.min(100, v)) });
+  },
+
+  setIsPlaying: (playing: boolean) => {
+    set({ isPlaying: playing });
+  },
+
+  setPlaybackTime: (t: number) => {
+    set({ playbackTime: t });
+  },
+
+  setYoutubePlayer: (p: any) => {
+    set({ youtubePlayer: p });
   },
 
   setWorkspace: (n: number) => {
