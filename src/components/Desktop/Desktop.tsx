@@ -110,6 +110,7 @@ export function Desktop() {
   // Playback state for YouTube
   const currentTrackId = useWmStore((s) => s.currentTrackId);
   const isPlaying = useWmStore((s) => s.isPlaying);
+  const audioEnabled = useWmStore((s) => s.audioEnabled);
   const volume = useWmStore((s) => s.volume);
   const setIsPlaying = useWmStore((s) => s.setIsPlaying);
   const setPlaybackTime = useWmStore((s) => s.setPlaybackTime);
@@ -127,10 +128,20 @@ export function Desktop() {
   }, [isPlaying]);
 
   useEffect(() => {
-    if (playerRef.current) {
-      playerRef.current.setVolume(volume);
+    if (youtubePlayer) {
+      youtubePlayer.setVolume(volume);
     }
-  }, [volume]);
+  }, [volume, youtubePlayer]);
+
+  useEffect(() => {
+    if (youtubePlayer) {
+      if (audioEnabled) {
+        youtubePlayer.unMute();
+      } else {
+        youtubePlayer.mute();
+      }
+    }
+  }, [audioEnabled, youtubePlayer]);
 
   // Track time
   useEffect(() => {
@@ -315,6 +326,8 @@ export function Desktop() {
               playerRef.current = e.target;
               setYoutubePlayer(e.target);
               e.target.setVolume(volume);
+              if (audioEnabled) e.target.unMute();
+              else e.target.mute();
               if (isPlaying) e.target.playVideo();
             }}
             onPlay={() => setIsPlaying(true)}

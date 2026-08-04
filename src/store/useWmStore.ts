@@ -167,7 +167,7 @@ export const useWmStore = create<WmState>((set, get) => ({
   activeWorkspace: 1,
   focusedWindowId: "about",
   theme: "dark",
-  audioEnabled: false,
+  audioEnabled: true,
   commandPaletteOpen: false,
   keybindSheetOpen: false,
   calendarOpen: false,
