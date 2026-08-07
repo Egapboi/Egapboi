@@ -13,7 +13,12 @@ export function HiddenYoutubePlayer() {
   const setPlaybackTime = useWmStore((s) => s.setPlaybackTime);
   const setYoutubePlayer = useWmStore((s) => s.setYoutubePlayer);
   const youtubePlayer = useWmStore((s) => s.youtubePlayer);
+  const fetchPlaylist = useWmStore((s) => s.fetchPlaylist);
   const playerRef = useRef<YouTubePlayer | null>(null);
+
+  useEffect(() => {
+    fetchPlaylist();
+  }, [fetchPlaylist]);
 
   // Sync YouTube player with store
   useEffect(() => {

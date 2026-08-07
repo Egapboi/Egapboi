@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { Track } from "@/data/playlist";
 
 export interface WindowState {
   id: string;
@@ -40,6 +41,8 @@ interface WmState {
   volume: number;
   playbackTime: number;
   youtubePlayer: any;
+  playlist: Track[];
+  fetchPlaylist: () => Promise<void>;
 
   // Window actions
   openWindow: (id: string) => void;
@@ -179,6 +182,18 @@ export const useWmStore = create<WmState>((set, get) => ({
   volume: 50,
   playbackTime: 0,
   youtubePlayer: null,
+  playlist: [],
+  fetchPlaylist: async () => {
+    try {
+      const res = await fetch("/api/playlist");
+      if (res.ok) {
+        const data = await res.json();
+        set({ playlist: data.playlist });
+      }
+    } catch (e) {
+      console.error("Failed to fetch playlist", e);
+    }
+  },
 
   openWindow: (id: string) => {
     set((state) => {

@@ -1,12 +1,12 @@
 "use client";
 
 import { useWmStore } from "@/store/useWmStore";
-import { playlist } from "@/data/playlist";
 import Image from "next/image";
 import { Play, Pause, SkipForward, SkipBack } from "lucide-react";
 
 export function MediaWindow() {
   const currentTrackId = useWmStore((s) => s.currentTrackId);
+  const playlist = useWmStore((s) => s.playlist);
   const isPlaying = useWmStore((s) => s.isPlaying);
   const playbackTime = useWmStore((s) => s.playbackTime);
   const youtubePlayer = useWmStore((s) => s.youtubePlayer);

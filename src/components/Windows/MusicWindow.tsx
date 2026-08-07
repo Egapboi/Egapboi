@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { playlist } from "@/data/playlist";
 import { useWmStore } from "@/store/useWmStore";
 import { Search, Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react";
 
 export function MusicWindow() {
   const [search, setSearch] = useState("");
   const currentTrackId = useWmStore((s) => s.currentTrackId);
+  const playlist = useWmStore((s) => s.playlist);
   const isPlaying = useWmStore((s) => s.isPlaying);
   const volume = useWmStore((s) => s.volume);
   const playTrack = useWmStore((s) => s.playTrack);

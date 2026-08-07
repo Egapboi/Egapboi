@@ -1,12 +1,12 @@
 "use client";
 
 import { useWmStore } from "@/store/useWmStore";
-import { playlist } from "@/data/playlist";
 import { Play, Pause, SkipForward, SkipBack, Music } from "lucide-react";
 
 export function MusicWidget() {
   const isPlaying = useWmStore((s) => s.isPlaying);
   const currentTrackId = useWmStore((s) => s.currentTrackId);
+  const playlist = useWmStore((s) => s.playlist);
   const togglePlayback = useWmStore((s) => s.togglePlayback);
   const playTrack = useWmStore((s) => s.playTrack);
   const openWindow = useWmStore((s) => s.openWindow);
