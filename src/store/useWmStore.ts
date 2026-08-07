@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { Track } from "@/data/playlist";
+import { Track, playlist as defaultPlaylist } from "@/data/playlist";
 
 export interface WindowState {
   id: string;
@@ -182,16 +182,23 @@ export const useWmStore = create<WmState>((set, get) => ({
   volume: 50,
   playbackTime: 0,
   youtubePlayer: null,
-  playlist: [],
+  playlist: defaultPlaylist,
   fetchPlaylist: async () => {
     try {
       const res = await fetch("/api/playlist");
       if (res.ok) {
         const data = await res.json();
-        set({ playlist: data.playlist });
+        if (data.playlist && data.playlist.length > 0) {
+          set({ playlist: data.playlist });
+          return;
+        }
       }
+      // Fallback to default playlist if fetch fails or returns empty
+      console.warn("Falling back to default playlist");
+      set({ playlist: defaultPlaylist });
     } catch (e) {
       console.error("Failed to fetch playlist", e);
+      set({ playlist: defaultPlaylist });
     }
   },
 
